@@ -236,7 +236,7 @@ namespace KontrolnaRobota
                             if (products[i].Name == products[j].Name && i != j)
                             {
                                 count[i]++;
-                            
+                            }
                         }
                     }
                     Console.WriteLine($"Товар з чеку {c + 1}");
