@@ -64,5 +64,16 @@ namespace EFCoreProject.Services.UserServices
             }
 
         }
+
+        public bool BuyProducts(long checkId, string productName)
+        {
+            ProductEntity dbRecord = GetByName(productName);
+
+            if (dbRecord == null)
+                return false;
+
+            dbRecord.CheckFK = checkId;
+            return Update(dbRecord);
+        }
     }
 }

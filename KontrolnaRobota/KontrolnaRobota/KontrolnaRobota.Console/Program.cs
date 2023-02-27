@@ -85,13 +85,13 @@ namespace KontrolnaRobota
             string buyername = Console.ReadLine();
             Console.WriteLine("Surname?");
             string buyersurname = Console.ReadLine();
-            Console.WriteLine("Email??");
-            string buyeremail = Console.ReadLine();
-            Console.WriteLine("Birthdate?");
-            DateTime buyerdateofbirth = DateTime.Parse(Console.ReadLine());
             BuyerEntity buyer = buyerService.GetByNameAndSurname(buyername, buyersurname);
             if (buyer == null)
             {
+                Console.WriteLine("Email??");
+                string buyeremail = Console.ReadLine();
+                Console.WriteLine("Birthdate?");
+                DateTime buyerdateofbirth = DateTime.Parse(Console.ReadLine());
                 buyer = new BuyerEntity()
                 {
                     Name = buyername,
@@ -122,22 +122,18 @@ namespace KontrolnaRobota
                 int countProduct = int.Parse(Console.ReadLine());
                 for(int j = 0; j < countProduct; j++)
                 {
-                    ProductEntity product = productService.GetByName(nameProduct);
-                    if (product != null)
-                    {
-                        product.CheckFK = check.Id;
-                        check.Products.Add(product);
-                        productService.Update(product);
-                    }
-                    else
+                   
+                    if (!productService.BuyProducts(check.Id, nameProduct))
                     {
                         Console.WriteLine("немає даного товару!");
                         break;
                     }
+
+                   
                 }
             }
             checkService.Update(check);
-            buyer.Checks.Add(check);
+            
             buyerService.Update(buyer);           
         }
         static void CheckProducts()
@@ -146,15 +142,12 @@ namespace KontrolnaRobota
             string name = Console.ReadLine();
             Console.WriteLine("Фамілія покупця? ");
             string surname = Console.ReadLine();
-
-            BuyerEntity buyer = buyerService.GetByNameAndSurname(name, surname);
-                if (buyer != null)
+            Console.WriteLine("номер чеку? ");
+            int a = int.Parse(Console.ReadLine());
+            List<ProductEntity> products = buyerService.GetProducts(name, surname, a);
+            if (products != null)
             {
-                Console.WriteLine("номер чеку? ");
-                int a = int.Parse(Console.ReadLine());
-                List<CheckEntity> checks = buyer.Checks.ToList();
-                CheckEntity check = checkService.GetById(checks[a - 1].Id);
-                List<ProductEntity> products = check.Products.ToList();
+                
                 List<int> count = new List<int>();
                 for(int i = 0; i < products.Count; i++)
                 {
@@ -187,17 +180,12 @@ namespace KontrolnaRobota
             Console.WriteLine("Фамілія покупця? ");
             string surname = Console.ReadLine();
 
-            BuyerEntity buyer = buyerService.GetByNameAndSurname(name, surname);
-            if (buyer != null)
+            int checksCount = buyerService.GetChecksCount(name, surname);
+            if (checksCount > 0)
             {
-                List<CheckEntity> checks = buyer.Checks.ToList();
-                
-                List<CheckEntity> listCheck = buyer.Checks.ToList();
-                for (int c = 0; c < listCheck.Count; c++)
+                for (int c = 1; c <= checksCount; c++)
                 {
-                    CheckEntity check = checkService.GetById(listCheck[c].Id);
-                    List<ProductEntity> products = check.Products.ToList();
-
+                    List<ProductEntity> products = buyerService.GetProducts(name, surname, c);
 
                     List<int> count = new List<int>();
                     for (int i = 0; i < products.Count; i++)
@@ -211,58 +199,7 @@ namespace KontrolnaRobota
                             }
                         }
                     }
-                    Console.WriteLine($"Товар з чеку {c+1}");
-                    double ttlprc = 0;
-                    for (int i = 0; i < products.Count; i += count[i])
-                    {
-                        Console.WriteLine($"{products[i].Id} Продукт: {count[i]}шт - {products[i].Name} | ціна: {products[i].Price} грн");
-                        ttlprc += products[i].Price * count[i];
-                    }
-                    Console.WriteLine("Загальна ціна: " + ttlprc + "грн");
-                    Console.WriteLine(new String ('-', 20));
-                }
-            }
-            else
-            {
-                Console.WriteLine("Такого покупця не існує!");
-            }
-
-        }
-        static void CheckAllProductsWithAdditionalDataOfBuyer()
-        {
-            Console.WriteLine("Ім'я покупця? ");
-            string name = Console.ReadLine();
-            Console.WriteLine("Фамілія покупця? ");
-            string surname = Console.ReadLine();
-
-            BuyerEntity buyer = buyerService.GetByNameAndSurname(name, surname);
-            if (buyer != null)
-            {
-                Console.WriteLine($"Покупець: {buyer.Name} {buyer.Surname}\n"+
-                    $"Дата народження: {buyer.BirthDate}\n" +
-                    $"Email: {buyer.Email}\n");
-                List<CheckEntity> checks = buyer.Checks.ToList();
-
-                List<CheckEntity> listCheck = buyer.Checks.ToList();
-                for (int c = 0; c < listCheck.Count; c++)
-                {
-                    CheckEntity check = checkService.GetById(listCheck[c].Id);
-                    List<ProductEntity> products = check.Products.ToList();
-
-
-                    List<int> count = new List<int>();
-                    for (int i = 0; i < products.Count; i++)
-                    {
-                        count.Add(1);
-                        for (int j = 0; j < products.Count; j++)
-                        {
-                            if (products[i].Name == products[j].Name && i != j)
-                            {
-                                count[i]++;
-                            }
-                        }
-                    }
-                    Console.WriteLine($"Товар з чеку {c + 1}");
+                    Console.WriteLine($"Товар з чеку {c}");
                     double ttlprc = 0;
                     for (int i = 0; i < products.Count; i += count[i])
                     {
@@ -275,7 +212,43 @@ namespace KontrolnaRobota
             }
             else
             {
-                Console.WriteLine("Такого покупця не існує!");
+                Console.WriteLine("Wrong Data!");
+            }
+
+        }
+        static void CheckAllProductsWithAdditionalDataOfBuyer()
+        {
+            List<BuyerEntity> buyers = buyerService.GetAllBuyers();
+            foreach (BuyerEntity buyer in buyers)
+            {
+                Console.WriteLine($"Покупець: {buyer.Name} {buyer.Surname}\n" +
+                    $"Дата народження: {buyer.BirthDate}\n" +
+                    $"Email: {buyer.Email}\n");
+                for (int c = 0; c < buyer.Checks.Count; c++)
+                {
+                    List<ProductEntity> products = checkService.GetBuyedProducts(buyer.Checks.ToList()[c].Id);
+                    List<int> count = new List<int>();
+                    for (int i = 0; i < products.Count; i++)
+                    {
+                        count.Add(1);
+                        for (int j = 0; j < products.Count; j++)
+                        {
+                            if (products[i].Name == products[j].Name && i != j)
+                            {
+                                count[i]++;
+                            
+                        }
+                    }
+                    Console.WriteLine($"Товар з чеку {c + 1}");
+                    double ttlprc = 0;
+                    for (int i = 0; i < products.Count; i += count[i])
+                    {
+                        Console.WriteLine($"{products[i].Id} Продукт: {count[i]}шт - {products[i].Name} | ціна: {products[i].Price} грн");
+                        ttlprc += products[i].Price * count[i];
+                    }
+                    Console.WriteLine("Загальна ціна: " + ttlprc + "грн");
+                    Console.WriteLine(new String('-', 20));
+                }
             }
         }
         static void AllNotBoughtProducts()
@@ -298,53 +271,39 @@ namespace KontrolnaRobota
             {
                 Console.WriteLine($"{butBoughtProducts[i].Id} Продукт: {count[i]}шт - {butBoughtProducts[i].Name} | ціна: {butBoughtProducts[i].Price} грн");
             }
-
         }
         static void GetBuyersCheck()
         {
             Console.WriteLine("Ім'я покупця? ");
             string name = Console.ReadLine();
             Console.WriteLine("Фамілія покупця? ");
-            string surname = Console.ReadLine();
-
-            BuyerEntity buyer = buyerService.GetByNameAndSurname(name, surname);
-            if (buyer != null)
+            string surname = Console.ReadLine();           
+            Console.WriteLine("номер чеку? ");
+            int a = int.Parse(Console.ReadLine());
+            CheckEntity check = buyerService.GetCheck(name, surname, a);
+            Console.WriteLine($"Номер чеку: {check.Id}\n"
+                +
+                $"Дата: {check.DateOfBuying}\n");
+            List<ProductEntity> products = checkService.GetBuyedProducts(check.Id);
+            List<int> count = new List<int>();
+            for (int i = 0; i < products.Count; i++)
             {
-                Console.WriteLine("номер чеку? ");
-                int a = int.Parse(Console.ReadLine());
-
-                List<CheckEntity> checks = buyer.Checks.ToList();
-                CheckEntity check = checkService.GetById(checks[a - 1].Id);
-
-                Console.WriteLine($"Номер чеку: {check.Id}\n"
-                    +
-                   $"Дата: {check.DateOfBuying}\n");
-
-                List<ProductEntity> products = check.Products.ToList();
-                List<int> count = new List<int>();
-                for (int i = 0; i < products.Count; i++)
+                count.Add(1);
+                for (int j = 0; j < products.Count; j++)
                 {
-                    count.Add(1);
-                    for (int j = 0; j < products.Count; j++)
+                    if (products[i].Name == products[j].Name && i != j)
                     {
-                        if (products[i].Name == products[j].Name && i != j)
-                        {
-                            count[i]++;
-                        }
+                        count[i]++;
                     }
                 }
-                double ttlprc = 0;
-                for (int i = 0; i < products.Count; i += count[i])
-                {
-                    Console.WriteLine($"{products[i].Id} Продукт: {count[i]}шт - {products[i].Name} | ціна: {products[i].Price} грн");
-                    ttlprc += products[i].Price * count[i];
-                }
-                Console.WriteLine("Загальна ціна: " + ttlprc + "грн");
             }
-            else
+            double ttlprc = 0;
+            for (int i = 0; i < products.Count; i += count[i])
             {
-                Console.WriteLine("Такого покупця не існує!");
+                Console.WriteLine($"{products[i].Id} Продукт: {count[i]}шт - {products[i].Name} | ціна: {products[i].Price} грн");
+                ttlprc += products[i].Price * count[i];
             }
+            Console.WriteLine("Загальна ціна: " + ttlprc + "грн");
         }
     }
 }

@@ -11,5 +11,6 @@ namespace EFCoreProject.Services.UserServices
         bool Update(CheckEntity checkEntity);
         CheckEntity GetById(long id);
         CheckEntity GetByBuyerFK(long buyerFK);
+        List<ProductEntity> GetBuyedProducts(long checkID);
     }
 }

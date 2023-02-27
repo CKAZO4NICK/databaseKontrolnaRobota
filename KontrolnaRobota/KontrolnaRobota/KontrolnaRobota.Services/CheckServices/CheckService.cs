@@ -56,5 +56,15 @@ namespace EFCoreProject.Services.UserServices
             return dbRecord;
         }
 
+        public List<ProductEntity> GetBuyedProducts(long checkID)
+        {
+            CheckEntity check = GetById(checkID);
+            if(check == null)
+            {
+                return null;
+            }
+
+            return check.Products.ToList();
+        }
     }
 }

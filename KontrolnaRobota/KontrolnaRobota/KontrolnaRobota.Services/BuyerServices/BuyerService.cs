@@ -18,7 +18,16 @@ namespace EFCoreProject.Services.UserServices
         {
             _genericRepository.Create(buyerEntity);
         }
-        
+
+        public List<BuyerEntity> GetAllBuyers()
+        {
+            List<BuyerEntity> dbRecord = _genericRepository.Table
+                .Include(buyer => buyer.Checks)
+                .ThenInclude(check => check.Products)
+                 .ToList();
+            return dbRecord;
+        }
+
         public BuyerEntity GetById(long id)
         {
             BuyerEntity dbRecord = _genericRepository.Table
@@ -35,6 +44,7 @@ namespace EFCoreProject.Services.UserServices
             BuyerEntity dbRecord = _genericRepository.Table
                 .Where(buyer => buyer.Name == name && buyer.Surname == surname)
                 .Include(buyer => buyer.Checks)
+                .ThenInclude(check => check.Products)
                .FirstOrDefault()!;
             
             if (dbRecord == null)
@@ -43,6 +53,42 @@ namespace EFCoreProject.Services.UserServices
             }
             return dbRecord;
         }
+
+        public CheckEntity GetCheck(string name, string surname, int checkNumber)
+        {
+            BuyerEntity buyer = GetByNameAndSurname(name, surname);
+            if(buyer == null)
+            {
+                return null;
+            }
+            
+            return buyer.Checks.ToList()[checkNumber - 1];
+        }
+
+        public int GetChecksCount(string name, string surname)
+        {
+            BuyerEntity buyer = GetByNameAndSurname(name, surname);
+            if(buyer == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return buyer.Checks.Count();
+            }
+        }
+
+        public List<ProductEntity> GetProducts(string name, string surname, int checkNumber)
+        {
+            BuyerEntity buyer = GetByNameAndSurname(name, surname);
+            if(buyer == null)
+            {
+                return null;
+            }
+            return buyer.Checks.ToList()[checkNumber - 1]
+                .Products.ToList();
+        }
+        
 
         public bool Update(BuyerEntity buyerEntity)
         {

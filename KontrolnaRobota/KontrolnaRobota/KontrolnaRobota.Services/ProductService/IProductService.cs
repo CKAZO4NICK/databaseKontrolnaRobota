@@ -12,5 +12,6 @@ namespace EFCoreProject.Services.UserServices
         ProductEntity GetById(long id);
         ProductEntity GetByName(string name);
         List<ProductEntity> GetNotBought();
+        bool BuyProducts(long checkId, string productName);
     }
 }
